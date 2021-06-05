@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Install directory path
+DIR="/opt/"
+# Git directory path
+GDIR=$PWD
+
+function main(){
+	echo "===== $1 ====="
+	# Cleanup dir
+	if [ -d $DIR$1 ]; then
+		make -C $DIR$1 uninstall
+		rm -rf $DIR$1
+	fi
+	# Clone
+	mkdir -p $DIR$1
+	git clone https://git.suckless.org/$1 $DIR$1
+	# Patches
+	for file in $GDIR/$1/patches/*; do
+		echo $file
+		patch -p1 -d $DIR$1 < $file
+	done
+	# Config file
+	[ -f $GDIR/$1/config/config.h ] && cp $GDIR/$1/config/config.h $DIR$1/ && echo "Config file copied"
+	# Install
+	make -C $DIR$1 install clean
+}
+
+# If no argument is given, install everything
+if [ -z $1 ]; then
+	for i in "dmenu" "dwm"; do
+		echo "$i"
+		main $i
+	done
+# Else install the given app
+else
+	main $1
+fi
